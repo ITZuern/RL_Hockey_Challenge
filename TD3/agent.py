@@ -11,7 +11,7 @@ class Agent():
     def __init__(self, alpha, beta, input_dims, tau, env,
                  gamma=0.99, update_actor_interval=2, warmup=1000,
                  n_actions=2, max_size=1000000, layer1_size=400,
-                 layer2_size=300, batch_size=100, noise=0.1):
+                 layer2_size=300, batch_size=100, noise=0.1, device = "cuda"):
         self.gamma = gamma
         self.tau = tau
         self.max_action = env.action_space.high
@@ -26,23 +26,23 @@ class Agent():
 
         self.actor = ActorNetwork(alpha, input_dims, layer1_size,
                                   layer2_size, n_actions=n_actions,
-                                  name='actor')
+                                  name='actor', device = device)
         self.critic_1 = CriticNetwork(beta, input_dims, layer1_size,
                                       layer2_size, n_actions=n_actions,
-                                      name='critic_1')
+                                      name='critic_1', device = device)
         self.critic_2 = CriticNetwork(beta, input_dims, layer1_size,
                                       layer2_size, n_actions=n_actions,
-                                      name='critic_2')
+                                      name='critic_2', device = device)
 
         self.target_actor = ActorNetwork(alpha, input_dims, layer1_size,
                                          layer2_size, n_actions=n_actions,
-                                         name='target_actor')
+                                         name='target_actor', device = device)
         self.target_critic_1 = CriticNetwork(beta, input_dims, layer1_size,
                                              layer2_size, n_actions=n_actions,
-                                             name='target_critic_1')
+                                             name='target_critic_1', device = device)
         self.target_critic_2 = CriticNetwork(beta, input_dims, layer1_size,
                                              layer2_size, n_actions=n_actions,
-                                             name='target_critic_2')
+                                             name='target_critic_2', device = device)
 
         self.noise = noise
         self.update_network_parameters(tau=1)

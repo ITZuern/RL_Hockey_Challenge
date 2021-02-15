@@ -2,6 +2,7 @@ import gym
 import numpy as np
 import matplotlib.pyplot as plt
 import laserhockey.hockey_env as h_env
+from agent import Agent
 
 
 def plot_learning_curve(x, scores, figure_file):
@@ -17,7 +18,6 @@ def loadEnv(env_name):
     switch = {
         "hockey_basic_opponent": h_env.HockeyEnv(),
         "hockey_weak_opponent": h_env.HockeyEnv(),
-        "hockey_model_opponent": h_env.HockeyEnv(),
         "hockey_train_shoot": h_env.HockeyEnv(mode=h_env.HockeyEnv.TRAIN_SHOOTING),
         "hockey_train_def": h_env.HockeyEnv(mode=h_env.HockeyEnv.TRAIN_DEFENSE)
     }
@@ -25,18 +25,28 @@ def loadEnv(env_name):
     if env:
         return env
     else:
-        return gym.make(env_name)
+        return h_env.HockeyEnv()
 
 
 def loadOpponent(env_name):
     switch = {
         "hockey_basic_opponent": h_env.BasicOpponent(weak=False),
         "hockey_weak_opponent": h_env.BasicOpponent(weak=True),
-        "hockey_model_opponent": h_env.BasicOpponent(weak=True),
         "hockey_train_shoot": None,
         "hockey_train_def": None
     }
-    return switch.get(env_name)
+    opponent = switch.get(env_name)
+    # if env_name was non of the options above, it is the path for a self trained model
+    if env_name not in ["hockey_basic_opponent",  "hockey_weak_opponent", "hockey_train_shoot", "hockey_train_def"]:
+        # init agent 
+        env =  h_env.HockeyEnv()
+        action_dim = int(env.action_space.shape[0]/2)
+        opponent = Agent(alpha=0.001, beta=0.001,
+                  input_dims=env.observation_space.shape, tau=0.005,
+                  env=env,n_actions=action_dim, device = "cpu")
+        # load pretrained agent 
+        opponent.load("models/"+env_name)
+    return opponent
 
 
 def rewardManipulation(info):

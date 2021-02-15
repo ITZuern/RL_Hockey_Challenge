@@ -8,7 +8,7 @@ import torch.optim as optim
 
 class CriticNetwork(nn.Module):
     def __init__(self, beta, input_dims, fc1_dims, fc2_dims, n_actions, name,
-                 chkpt_dir='tmp/ddpg'):
+                 chkpt_dir='tmp/ddpg', device="cuda"):
         super(CriticNetwork, self).__init__()
         self.input_dims = input_dims
         self.fc1_dims = fc1_dims
@@ -46,7 +46,10 @@ class CriticNetwork(nn.Module):
 
         self.optimizer = optim.Adam(self.parameters(), lr=beta,
                                     weight_decay=0.01)
-        self.device = T.device('cuda:0' if T.cuda.is_available() else 'cuda:1')
+        if device == 'cuda':
+            self.device = T.device('cuda:0' if T.cuda.is_available() else 'cuda:1')
+        else: 
+            self.device = T.device('cpu')
 
         self.to(self.device)
 
@@ -67,7 +70,7 @@ class CriticNetwork(nn.Module):
 
 class ActorNetwork(nn.Module):
     def __init__(self, alpha, input_dims, fc1_dims, fc2_dims, n_actions, name,
-                 chkpt_dir='tmp/ddpg'):
+                 chkpt_dir='tmp/ddpg', device="cuda"):
         super(ActorNetwork, self).__init__()
         self.input_dims = input_dims
         self.fc1_dims = fc1_dims
@@ -98,7 +101,10 @@ class ActorNetwork(nn.Module):
         self.mu.bias.data.uniform_(-f3, f3)
 
         self.optimizer = optim.Adam(self.parameters(), lr=alpha)
-        self.device = T.device('cuda:0' if T.cuda.is_available() else 'cuda:1')
+        if device == 'cuda':
+            self.device = T.device('cuda:0' if T.cuda.is_available() else 'cuda:1')
+        else: 
+            self.device = T.device('cpu')
 
         self.to(self.device)
 

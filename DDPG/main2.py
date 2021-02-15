@@ -33,10 +33,10 @@ def main():
         action_dim = int(env.action_space.shape[0]/2)
 
     # init agent
-    agent = Agent(alpha=0.001, beta=0.001,
-                  input_dims=env.observation_space.shape, tau=0.005,
-                  env=env, batch_size=100, layer1_size=400, layer2_size=300,
-                  n_actions=action_dim, device=device)
+    agent = Agent(alpha=0.0001, beta=0.001,
+                  input_dims=env.observation_space.shape, tau=0.001,
+                  batch_size=64, fc1_dims=400, fc2_dims=300,
+                  n_actions=action_dim, device = device)
 
     # if a path for a pretrained agent was given, load this agent
     if opts.path != "":
