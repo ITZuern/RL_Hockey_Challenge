@@ -198,16 +198,17 @@ def playHockey(agent, env_names, n_games, explore, train, render, switch=10, tur
 def buildTrainPlan(trainPlan):
     switch = {
         "shoot": ['hockey_train_shoot'],
-        "def": ['hockey_train_def'], 
-        "weak":['hockey_weak_opponent'], 
-        "strong":['hockey_basic_opponent'], 
-        "static":['hockey_train_shoot', 'hockey_train_def'], 
-        "basic":['hockey_weak_opponent', 'hockey_basic_opponent'], 
-        "full":['hockey_train_shoot', 'hockey_train_def', 'hockey_weak_opponent', 'hockey_basic_opponent'], 
-        # TODO replace test with one or several pretrained models 
-        "v1":['hockey_train_shoot', 'hockey_train_def', 'hockey_weak_opponent', 'hockey_basic_opponent', 'test']  
+        "def": ['hockey_train_def'],
+        "weak": ['hockey_weak_opponent'],
+        "strong": ['hockey_basic_opponent'],
+        "static": ['hockey_train_shoot', 'hockey_train_def'],
+        "basic": ['hockey_weak_opponent', 'hockey_basic_opponent'],
+        "full": ['hockey_train_shoot', 'hockey_train_def', 'hockey_weak_opponent', 'hockey_basic_opponent'],
+        "friedo": ['furchtloser_friedolin_v2'],
+        "v1": ['hockey_train_shoot', 'hockey_train_def', 'hockey_weak_opponent', 'hockey_basic_opponent', 'test'],
+        "v2": ['hockey_weak_opponent', 'hockey_basic_opponent', 'furchtloser_friedolin_v2']
     }
-    return switch.get(trainPlan) 
+    return switch.get(trainPlan)
 
 
 main()

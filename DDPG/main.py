@@ -7,7 +7,6 @@ from utils import *
 from datetime import datetime
 
 
-
 def main():
     # LunarLanderContinuous-v2
     # Pendulum-v0
@@ -38,7 +37,7 @@ def main():
     agent = Agent(alpha=0.0001, beta=0.001,
                   input_dims=env.observation_space.shape, tau=0.001,
                   batch_size=64, fc1_dims=400, fc2_dims=300,
-                  n_actions=action_dim, device = device)
+                  n_actions=action_dim, device=device)
 
     # if a path for a pretrained agent was given, load this agent
     if opts.path != "":
@@ -50,15 +49,15 @@ def main():
     print("DEVICE: ", device)
     print("TRAIN PLAN: ", trainPlan)
 
-    # Game mode Hockey 
+    # Game mode Hockey
     if env_name.startswith('hockey'):
-        # build list of training scenarios 
-        #(shoot, defend, weak opponent, strong opponent or own network)
+        # build list of training scenarios
+        # (shoot, defend, weak opponent, strong opponent or own network)
         env_names = buildTrainPlan(trainPlan)
         # run several games and switch env after certain amount of games
         score_history = playHockey(
             agent, env_names, n_games, explore, train, render, games_per_env, turnament, save_opponent)
-   
+
     # Save the agent and make plot of reward curve
     if train:
         x = [i+1 for i in range(n_games)]
@@ -94,38 +93,40 @@ def parseOptions(optParser):
     optParser.add_option('-u', '--turnament', action='store_true',
                          dest='turnament', default=False)
     optParser.add_option('-o', '--save_opponent', action='store',
-                        dest='save_opponent', default=20, type='int')
+                         dest='save_opponent', default=20, type='int')
     opts, args = optParser.parse_args()
     return opts
 
+
 def getOpponentAction(env_name, env, opponent):
     if env_name == 'hockey_train_shoot' or env_name == 'hockey_train_def':
-        # For shoot and defend training, the opponent is fixed 
+        # For shoot and defend training, the opponent is fixed
         return [0, 0, 0, 0]
     elif env_name == 'hockey_basic_opponent' or env_name == 'hockey_weak_opponent':
         # for basic opponent, get action based on obs_agent two
         return opponent.act(env.obs_agent_two())
     else:
-        # for own network as opponent, get 
+        # for own network as opponent, get
         return opponent.act(env.obs_agent_two(), False)
 
-def playHockey(agent, env_names, n_games, explore, train, render, switch=10, turnament = False, save_opponent = 20):
+
+def playHockey(agent, env_names, n_games, explore, train, render, switch=10, turnament=False, save_opponent=20):
     score_history = []
     j = 0
     result_counter = 0
     env = None
     opponent_idx = 0
 
-    # run n games 
+    # run n games
     for i in range(n_games):
-        
-        # if switch training environment after several games 
+
+        # if switch training environment after several games
         if i % switch == 0:
             # do not change if only one train env is selected
-            if not (env and len(env_names)==1):
+            if not (env and len(env_names) == 1):
                 # reset win, loses and draws counter
                 wins, loses, draws = 0, 0, 0
-                # switch the training environment 
+                # switch the training environment
                 env_name = env_names[j]
                 print('\n \n Switch opponent to: ', env_name)
                 if j == len(env_names) - 1:
@@ -134,13 +135,13 @@ def playHockey(agent, env_names, n_games, explore, train, render, switch=10, tur
                     j += 1
                 result_counter = 0
                 opponent = loadOpponent(env_name)
-                # close previous environment 
+                # close previous environment
                 if(env):
                     env.close()
                 # load new environment
                 env = loadEnv(env_name)
 
-        # rollout of one game 
+        # rollout of one game
         observation = env.reset()
         done = False
         score = 0
@@ -157,28 +158,27 @@ def playHockey(agent, env_names, n_games, explore, train, render, switch=10, tur
             if train:
                 # fill buffer of agent for training
                 agent.remember(observation, action_p1,
-                reward, observation_, done)
+                               reward, observation_, done)
                 agent.learn()
             score += reward
             observation = observation_
-            # render the game if in render mode 
+            # render the game if in render mode
             if render:
                 env.render()
 
-
-        # if turnament mode save new opponent after some games 
-        if turnament and i % save_opponent == 0 and i != 0: 
+        # if turnament mode save new opponent after some games
+        if turnament and i % save_opponent == 0 and i != 0:
             print("Add opponent ", opponent_idx+1)
             name = "op_"+str(opponent_idx+1)
-            agent.save(name, timestamp = False)
-            if name not in env_names: 
+            agent.save(name, timestamp=False)
+            if name not in env_names:
                 env_names.append(name)
             opponent_idx += 1
             # after ten saved opponents the oldest one is overwritten
             if opponent_idx >= 10:
                 opponent_idx = 0
 
-        # keep track of wins/loses/draws 
+        # keep track of wins/loses/draws
         result_counter += 1
         wins, loses, draws = countResults(
             info['winner'], wins, loses, draws)
@@ -195,19 +195,21 @@ def playHockey(agent, env_names, n_games, explore, train, render, switch=10, tur
 
     return score_history
 
+
 def buildTrainPlan(trainPlan):
     switch = {
         "shoot": ['hockey_train_shoot'],
-        "def": ['hockey_train_def'], 
-        "weak":['hockey_weak_opponent'], 
-        "strong":['hockey_basic_opponent'], 
-        "static":['hockey_train_shoot', 'hockey_train_def'], 
-        "basic":['hockey_weak_opponent', 'hockey_basic_opponent'], 
-        "full":['hockey_train_shoot', 'hockey_train_def', 'hockey_weak_opponent', 'hockey_basic_opponent'], 
-        # TODO replace test with one or several pretrained models 
-        "v1":['hockey_train_shoot', 'hockey_train_def', 'hockey_weak_opponent', 'hockey_basic_opponent', 'test']  
+        "def": ['hockey_train_def'],
+        "weak": ['hockey_weak_opponent'],
+        "strong": ['hockey_basic_opponent'],
+        "static": ['hockey_train_shoot', 'hockey_train_def'],
+        "basic": ['hockey_weak_opponent', 'hockey_basic_opponent'],
+        "full": ['hockey_train_shoot', 'hockey_train_def', 'hockey_weak_opponent', 'hockey_basic_opponent'],
+        "friedo": ['wuetender_walter'],
+        "v1": ['hockey_train_shoot', 'hockey_train_def', 'hockey_weak_opponent', 'hockey_basic_opponent', 'test'],
+        "v2": ['hockey_weak_opponent', 'hockey_basic_opponent', 'wuetender_walter_v2']
     }
-    return switch.get(trainPlan) 
+    return switch.get(trainPlan)
 
 
 main()
