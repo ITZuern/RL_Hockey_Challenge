@@ -73,8 +73,11 @@ class Agent():
     def remember(self, state, action, reward, state_, done):
         self.memory.store_transition(state, action, reward, state_, done)
 
-    def save(self, env_name):
-        path = "models/"+env_name+str(datetime.now().strftime("-%m%d%Y%H%M%S"))
+    def save(self, env_name, timestamp = True):
+        if timestamp:
+            path = "models/"+env_name+str(datetime.now().strftime("-%m%d%Y%H%M%S"))
+        else: 
+            path = "models/"+env_name
         if not os.path.exists(path):
             os.mkdir(path)
 
