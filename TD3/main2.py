@@ -7,7 +7,6 @@ from utils import *
 from datetime import datetime
 
 
-
 def main():
     # LunarLanderContinuous-v2
     # Pendulum-v0
@@ -48,15 +47,15 @@ def main():
     print("DEVICE: ", device)
     print("TRAIN PLAN: ", trainPlan)
 
-    # Game mode Hockey 
+    # Game mode Hockey
     if env_name.startswith('hockey'):
-        # build list of training scenarios 
-        #(shoot, defend, weak opponent, strong opponent or own network)
+        # build list of training scenarios
+        # (shoot, defend, weak opponent, strong opponent or own network)
         env_names = buildTrainPlan(trainPlan)
         # run several games and switch env after certain amount of games
         score_history = playHockey(
             agent, env_names, n_games, explore, train, render, games_per_env)
-   
+
     # Save the agent and make plot of reward curve
     if train:
         x = [i+1 for i in range(n_games)]
@@ -92,16 +91,18 @@ def parseOptions(optParser):
     opts, args = optParser.parse_args()
     return opts
 
+
 def getOpponentAction(env_name, env, opponent):
     if env_name == 'hockey_train_shoot' or env_name == 'hockey_train_def':
-        # For shoot and defend training, the opponent is fixed 
+        # For shoot and defend training, the opponent is fixed
         return [0, 0, 0, 0]
     elif env_name == 'hockey_basic_opponent' or env_name == 'hockey_weak_opponent':
         # for basic opponent, get action based on obs_agent two
         return opponent.act(env.obs_agent_two())
     else:
-        # for own network as opponent, get 
+        # for own network as opponent, get
         return opponent.act(env.obs_agent_two(), False)
+
 
 def playHockey(agent, env_names, n_games, explore, train, render, switch=100):
     score_history = []
@@ -109,16 +110,16 @@ def playHockey(agent, env_names, n_games, explore, train, render, switch=100):
     result_counter = 0
     env = None
 
-    # run n games 
+    # run n games
     for i in range(n_games):
-        
-        # if switch training environment after several games 
+
+        # if switch training environment after several games
         if i % switch == 0:
             # do not change if only one train env is selected
-            if not (env and len(env_names)==1):
+            if not (env and len(env_names) == 1):
                 # reset win, loses and draws counter
                 wins, loses, draws = 0, 0, 0
-                # switch the training environment 
+                # switch the training environment
                 env_name = env_names[j]
                 print('\n \n Switch opponent to: ', env_name)
                 if j == len(env_names) - 1:
@@ -127,13 +128,13 @@ def playHockey(agent, env_names, n_games, explore, train, render, switch=100):
                     j += 1
                 result_counter = 0
                 opponent = loadOpponent(env_name)
-                # close previous environment 
+                # close previous environment
                 if(env):
                     env.close()
                 # load new environment
                 env = loadEnv(env_name)
 
-        # rollout of one game 
+        # rollout of one game
         observation = env.reset()
         done = False
         score = 0
@@ -150,15 +151,15 @@ def playHockey(agent, env_names, n_games, explore, train, render, switch=100):
             if train:
                 # fill buffer of agent for training
                 agent.remember(observation, action_p1,
-                reward, observation_, done)
+                               reward, observation_, done)
                 agent.learn()
             score += reward
             observation = observation_
-            # render the game if in render mode 
+            # render the game if in render mode
             if render:
                 env.render()
 
-        # keep track of wins/loses/draws 
+        # keep track of wins/loses/draws
         result_counter += 1
         wins, loses, draws = countResults(
             info['winner'], wins, loses, draws)
@@ -175,19 +176,21 @@ def playHockey(agent, env_names, n_games, explore, train, render, switch=100):
 
     return score_history
 
+
 def buildTrainPlan(trainPlan):
     switch = {
         "shoot": ['hockey_train_shoot'],
-        "def": ['hockey_train_def'], 
-        "weak":['hockey_weak_opponent'], 
-        "strong":['hockey_basic_opponent'], 
-        "static":['hockey_train_shoot', 'hockey_train_def'], 
-        "basic":['hockey_weak_opponent', 'hockey_basic_opponent'], 
-        "full":['hockey_train_shoot', 'hockey_train_def', 'hockey_weak_opponent', 'hockey_basic_opponent'], 
-        # TODO replace test with one or several pretrained models 
-        "v1":['hockey_train_shoot', 'hockey_train_def', 'hockey_weak_opponent', 'hockey_basic_opponent', 'test']  
+        "def": ['hockey_train_def'],
+        "weak": ['hockey_weak_opponent'],
+        "strong": ['hockey_basic_opponent'],
+        "static": ['hockey_train_shoot', 'hockey_train_def'],
+        "basic": ['hockey_weak_opponent', 'hockey_basic_opponent'],
+        "full": ['hockey_train_shoot', 'hockey_train_def', 'hockey_weak_opponent', 'hockey_basic_opponent'],
+        "friedo": ['furchtloser_friedolin_v2'],
+        "v1": ['hockey_train_shoot', 'hockey_train_def', 'hockey_weak_opponent', 'hockey_basic_opponent', 'test'],
+        "v2": ['hockey_weak_opponent', 'hockey_basic_opponent', 'furchtloser_friedolin_v2']
     }
-    return switch.get(trainPlan) 
+    return switch.get(trainPlan)
 
 
 main()

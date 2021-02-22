@@ -1,0 +1,1 @@
+python main2.py -t -x -n 10000 -w 20 -v v2 -p furchtloser_friedolin_v2

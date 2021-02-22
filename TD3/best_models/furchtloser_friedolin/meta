@@ -1,0 +1,2 @@
+python main2.py -t -x -n 10000 -w 100 -v full
+
