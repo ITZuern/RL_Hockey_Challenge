@@ -25,6 +25,7 @@ def main():
     games_per_env = opts.games_per_env
     turnament = opts.turnament
     save_opponent = opts.save_opponent
+    iteration = 0
 
     env = loadEnv(env_name)
 
@@ -41,13 +42,14 @@ def main():
 
     # if a path for a pretrained agent was given, load this agent
     if opts.path != "":
-        agent.load(load_path)
+        iteration = agent.load(load_path)
 
     print("TRAIN: ", train)
     print("EXPLORE: ", explore)
     print("PATH: ", opts.path)
     print("DEVICE: ", device)
     print("TRAIN PLAN: ", trainPlan)
+    print("ITERATION: ", iteration)
 
     # Game mode Hockey
     if env_name.startswith('hockey'):
@@ -55,13 +57,13 @@ def main():
         # (shoot, defend, weak opponent, strong opponent or own network)
         env_names = buildTrainPlan(trainPlan)
         # run several games and switch env after certain amount of games
-        score_history = playHockey(
-            agent, env_names, n_games, explore, train, render, games_per_env, turnament, save_opponent)
+        score_history, iteration = playHockey(
+            agent, env_names, n_games, explore, train, render, games_per_env, turnament, save_opponent, iteration)
 
     # Save the agent and make plot of reward curve
     if train:
         x = [i+1 for i in range(n_games)]
-        agent.save(env_name)
+        agent.save(env_name, iteration)
         filename = env_name + str(datetime.now().strftime("-%m%d%Y%H%M%S"))
         figure_file = 'plots/' + filename + '.png'
         plot_learning_curve(x, score_history, figure_file)
@@ -110,7 +112,7 @@ def getOpponentAction(env_name, env, opponent):
         return opponent.act(env.obs_agent_two(), False)
 
 
-def playHockey(agent, env_names, n_games, explore, train, render, switch=10, turnament=False, save_opponent=20):
+def playHockey(agent, env_names, n_games, explore, train, render, switch=10, turnament=False, save_opponent=20, iteration=0):
     score_history = []
     j = 0
     result_counter = 0
@@ -119,7 +121,7 @@ def playHockey(agent, env_names, n_games, explore, train, render, switch=10, tur
 
     # run n games
     for i in range(n_games):
-
+        iteration += 1
         # if switch training environment after several games
         if i % switch == 0:
             # do not change if only one train env is selected
@@ -154,7 +156,7 @@ def playHockey(agent, env_names, n_games, explore, train, render, switch=10, tur
             observation_, _, done, info = env.step(action)
             # perform training
             # optional reward manipulation for training
-            reward = rewardManipulation(info)
+            reward = rewardManipulation(info, iteration, done)
             if train:
                 # fill buffer of agent for training
                 agent.remember(observation, action_p1,
@@ -193,7 +195,7 @@ def playHockey(agent, env_names, n_games, explore, train, render, switch=10, tur
         print('Drawrate in percent: ', (draws / (result_counter) * 100))
         print('Loserate in percent: ', (loses / (result_counter) * 100))
 
-    return score_history
+    return score_history, iteration
 
 
 def buildTrainPlan(trainPlan):

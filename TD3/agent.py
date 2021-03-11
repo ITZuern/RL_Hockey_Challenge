@@ -11,7 +11,7 @@ class Agent():
     def __init__(self, alpha, beta, input_dims, tau, env,
                  gamma=0.99, update_actor_interval=2, warmup=1000,
                  n_actions=2, max_size=1000000, layer1_size=400,
-                 layer2_size=300, batch_size=100, noise=0.1, device = "cuda"):
+                 layer2_size=300, batch_size=100, noise=0.1, device="cuda"):
         self.gamma = gamma
         self.tau = tau
         self.max_action = env.action_space.high
@@ -26,23 +26,23 @@ class Agent():
 
         self.actor = ActorNetwork(alpha, input_dims, layer1_size,
                                   layer2_size, n_actions=n_actions,
-                                  name='actor', device = device)
+                                  name='actor', device=device)
         self.critic_1 = CriticNetwork(beta, input_dims, layer1_size,
                                       layer2_size, n_actions=n_actions,
-                                      name='critic_1', device = device)
+                                      name='critic_1', device=device)
         self.critic_2 = CriticNetwork(beta, input_dims, layer1_size,
                                       layer2_size, n_actions=n_actions,
-                                      name='critic_2', device = device)
+                                      name='critic_2', device=device)
 
         self.target_actor = ActorNetwork(alpha, input_dims, layer1_size,
                                          layer2_size, n_actions=n_actions,
-                                         name='target_actor', device = device)
+                                         name='target_actor', device=device)
         self.target_critic_1 = CriticNetwork(beta, input_dims, layer1_size,
                                              layer2_size, n_actions=n_actions,
-                                             name='target_critic_1', device = device)
+                                             name='target_critic_1', device=device)
         self.target_critic_2 = CriticNetwork(beta, input_dims, layer1_size,
                                              layer2_size, n_actions=n_actions,
-                                             name='target_critic_2', device = device)
+                                             name='target_critic_2', device=device)
 
         self.noise = noise
         self.update_network_parameters(tau=1)
@@ -73,10 +73,11 @@ class Agent():
     def remember(self, state, action, reward, state_, done):
         self.memory.store_transition(state, action, reward, state_, done)
 
-    def save(self, env_name, timestamp = True):
+    def save(self, env_name, iteration=0, timestamp=True):
         if timestamp:
-            path = "models/"+env_name+str(datetime.now().strftime("-%m%d%Y%H%M%S"))
-        else: 
+            path = "models/"+env_name + \
+                str(datetime.now().strftime("-%m%d%Y%H%M%S"))
+        else:
             path = "models/"+env_name
         if not os.path.exists(path):
             os.mkdir(path)
@@ -84,6 +85,7 @@ class Agent():
         print("Save model to ", path)
         T.save({
             'model_state_dict': self.actor.state_dict(),
+            'iteration': iteration
         }, path+"/actor.pt")
 
         T.save({
@@ -106,6 +108,7 @@ class Agent():
         self.critic_2.load_state_dict(checkpoint_critic['model_state_dict'])
 
         self.update_network_parameters(tau=1)
+        return checkpoint_actor['iteration']
 
     def learn(self):
         if self.memory.mem_cntr < self.batch_size:

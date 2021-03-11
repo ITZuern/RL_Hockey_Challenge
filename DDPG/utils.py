@@ -38,32 +38,62 @@ def loadOpponent(env_name):
     opponent = switch.get(env_name)
     # if env_name was non of the options above, it is the path for a self trained model
     if env_name not in ["hockey_basic_opponent",  "hockey_weak_opponent", "hockey_train_shoot", "hockey_train_def"]:
-        # init agent 
-        env =  h_env.HockeyEnv()
+        # init agent
+        env = h_env.HockeyEnv()
         action_dim = int(env.action_space.shape[0]/2)
         opponent = Agent(alpha=0.0001, beta=0.001,
-                  input_dims=env.observation_space.shape, tau=0.001,
-                  batch_size=64, fc1_dims=400, fc2_dims=300,
-                  n_actions=action_dim, device = "cpu")
-        # load pretrained agent 
+                         input_dims=env.observation_space.shape, tau=0.001,
+                         batch_size=64, fc1_dims=400, fc2_dims=300,
+                         n_actions=action_dim, device="cpu")
+        # load pretrained agent
         opponent.load("models/"+env_name)
     return opponent
 
 
-def rewardManipulation(info):
-    # Punishment for doing nothing
-    reward = -0.005
-    # Touch puck reward
-    reward += info['reward_touch_puck'] * 30
-    # Puck direction reward
-    # if info['reward_puck_direction'] > 0:
-    #   reward += info['reward_puck_direction'] * 100
-    # Winner
-    if info['winner'] > 0:
-        reward += info['winner'] * 50
+def rewardManipulation(info, iteration, done):
+    reward = 0
+    if iteration < 500:
+        if done:
+            if info['winner'] == 0:
+                reward -= 200
 
-    if info['winner'] < 0:
-        reward += info['winner'] * 100
+        reward += info['reward_touch_puck'] * 30
+        reward -= 0.005
+
+    elif iteration < 1000:
+        if done:
+            if info['winner'] == 0:
+                reward -= 50
+
+            if info['winner'] == 1:
+                reward += 500
+
+            if info['winner'] == -1:
+                reward -= 200
+
+        reward += info['reward_touch_puck'] * 30
+
+    elif iteration < 2000:
+        if done:
+            if info['winner'] == 0:
+                reward -= 200
+
+            if info['winner'] == 1:
+                reward += 700
+
+            if info['winner'] == -1:
+                reward -= 500
+
+    else:
+        if done:
+            if info['winner'] == 0:
+                reward -= 700
+
+            if info['winner'] == 1:
+                reward += 700
+
+            if info['winner'] == -1:
+                reward -= 700
 
     return reward
 

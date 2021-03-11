@@ -23,15 +23,15 @@ class Agent():
         self.noise = OUActionNoise(mu=np.zeros(n_actions))
 
         self.actor = ActorNetwork(alpha, input_dims, fc1_dims, fc2_dims,
-                                  n_actions=n_actions, name='actor', device = device)
+                                  n_actions=n_actions, name='actor', device=device)
         self.critic = CriticNetwork(beta, input_dims, fc1_dims, fc2_dims,
-                                    n_actions=n_actions, name='critic', device = device)
+                                    n_actions=n_actions, name='critic', device=device)
 
         self.target_actor = ActorNetwork(alpha, input_dims, fc1_dims, fc2_dims,
-                                         n_actions=n_actions, name='target_actor', device = device)
+                                         n_actions=n_actions, name='target_actor', device=device)
 
         self.target_critic = CriticNetwork(beta, input_dims, fc1_dims, fc2_dims,
-                                           n_actions=n_actions, name='target_critic', device = device)
+                                           n_actions=n_actions, name='target_critic', device=device)
 
         self.update_network_parameters(tau=1)
 
@@ -51,22 +51,24 @@ class Agent():
     def remember(self, state, action, reward, state_, done):
         self.memory.store_transition(state, action, reward, state_, done)
 
-    def save(self, env_name, timestamp = True):
+    def save(self, env_name, iteration=0, timestamp=True):
         if timestamp:
-            path = "models/"+env_name+str(datetime.now().strftime("-%m%d%Y%H%M%S"))
-        else: 
+            path = "models/"+env_name + \
+                str(datetime.now().strftime("-%m%d%Y%H%M%S"))
+        else:
             path = "models/"+env_name
-        
+
         if not os.path.exists(path):
             os.mkdir(path)
 
         print("Save model to ", path)
         T.save({
             'model_state_dict': self.actor.state_dict(),
+            'iteration': iteration
         }, path+"/actor.pt")
 
         T.save({
-            'model_state_dict': self.critic.state_dict(),
+            'model_state_dict': self.critic.state_dict()
         }, path+"/critic.pt")
 
     def load(self, path):
@@ -77,6 +79,7 @@ class Agent():
         checkpoint_critic = T.load(path+"/critic.pt")
         self.critic.load_state_dict(checkpoint_critic['model_state_dict'])
         self.update_network_parameters(tau=1)
+        return checkpoint_actor['iteration']
 
     def learn(self):
         if self.memory.mem_cntr < self.batch_size:
