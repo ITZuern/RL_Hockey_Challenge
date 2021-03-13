@@ -14,6 +14,15 @@ def plot_learning_curve(x, scores, figure_file):
     plt.savefig(figure_file)
 
 
+def plot_results_curve(x, win_history, lose_history, draw_history, results_file):
+    plt.plot(x, win_history, label='Win-Rate')
+    plt.plot(x, lose_history, label='Lose-Rate')
+    plt.plot(x, draw_history, label='Draw-Rate')
+    plt.title('Win-, Lose- and Draw-Rate')
+    plt.legend()
+    plt.savefig(results_file)
+
+
 def loadEnv(env_name):
     switch = {
         "hockey_basic_opponent": h_env.HockeyEnv(),
@@ -43,7 +52,7 @@ def loadOpponent(env_name):
         action_dim = int(env.action_space.shape[0]/2)
         opponent = Agent(alpha=0.001, beta=0.001,
                          input_dims=env.observation_space.shape, tau=0.005,
-                         env=env, n_actions=action_dim, device="cpu")
+                         env=env, n_actions=action_dim, device="cuda")
         # load pretrained agent
         opponent.load("models/"+env_name)
     return opponent
@@ -51,7 +60,7 @@ def loadOpponent(env_name):
 
 def rewardManipulation(info, iteration, done):
     reward = 0
-    if iteration < 500:
+    if iteration < 1000:
         if done:
             if info['winner'] == 0:
                 reward -= 200
@@ -59,7 +68,7 @@ def rewardManipulation(info, iteration, done):
         reward += info['reward_touch_puck'] * 30
         reward -= 0.005
 
-    elif iteration < 1000:
+    elif iteration < 3000:
         if done:
             if info['winner'] == 0:
                 reward -= 50
@@ -72,7 +81,7 @@ def rewardManipulation(info, iteration, done):
 
         reward += info['reward_touch_puck'] * 30
 
-    elif iteration < 2000:
+    elif iteration < 6000:
         if done:
             if info['winner'] == 0:
                 reward -= 200

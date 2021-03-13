@@ -79,7 +79,10 @@ class Agent():
         checkpoint_critic = T.load(path+"/critic.pt")
         self.critic.load_state_dict(checkpoint_critic['model_state_dict'])
         self.update_network_parameters(tau=1)
-        return checkpoint_actor['iteration']
+        if 'iteration' in checkpoint_actor:
+            return checkpoint_actor['iteration']
+        else:
+            return 0
 
     def learn(self):
         if self.memory.mem_cntr < self.batch_size:

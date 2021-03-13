@@ -57,16 +57,21 @@ def main():
         # (shoot, defend, weak opponent, strong opponent or own network)
         env_names = buildTrainPlan(trainPlan)
         # run several games and switch env after certain amount of games
-        score_history, iteration = playHockey(
+        score_history, iteration, win_history, lose_history, draw_history = playHockey(
             agent, env_names, n_games, explore, train, render, games_per_env, turnament, save_opponent, iteration)
 
     # Save the agent and make plot of reward curve
+    filename = env_name + str(datetime.now().strftime("-%m%d%Y%H%M%S"))
+    x = [i+1 for i in range(n_games)]
+
     if train:
-        x = [i+1 for i in range(n_games)]
         agent.save(env_name, iteration)
-        filename = env_name + str(datetime.now().strftime("-%m%d%Y%H%M%S"))
         figure_file = 'plots/' + filename + '.png'
         plot_learning_curve(x, score_history, figure_file)
+
+    results_file = 'plots/' + filename + 'results.png'
+    plot_results_curve(x, win_history, lose_history,
+                       draw_history, results_file)
 
 
 def parseOptions(optParser):
@@ -115,6 +120,9 @@ def getOpponentAction(env_name, env, opponent):
 
 def playHockey(agent, env_names, n_games, explore, train, render, switch=10, turnament=False, save_opponent=20, iteration=0):
     score_history = []
+    win_history = []
+    draw_history = []
+    lose_history = []
     j = 0
     result_counter = 0
     env = None
@@ -187,6 +195,9 @@ def playHockey(agent, env_names, n_games, explore, train, render, switch=10, tur
             info['winner'], wins, loses, draws)
         # keep track of score(rewards)
         score_history.append(score)
+        win_history.append(wins / result_counter)
+        lose_history.append(loses / result_counter)
+        draw_history.append(draws / result_counter)
         avg_score = np.mean(score_history[-50:])
 
         # console output
@@ -196,7 +207,7 @@ def playHockey(agent, env_names, n_games, explore, train, render, switch=10, tur
         print('Drawrate in percent: ', (draws / (result_counter) * 100))
         print('Loserate in percent: ', (loses / (result_counter) * 100))
 
-    return score_history, iteration
+    return score_history, iteration, win_history, lose_history, draw_history
 
 
 def buildTrainPlan(trainPlan):
